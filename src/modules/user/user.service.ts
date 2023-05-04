@@ -8,6 +8,7 @@ import * as bcrypt from 'bcryptjs';
 import * as emailValidator from 'email-validator'
 import CustomError from '../../utils/CustomError'
 import { SignUpDto } from './dto/signup-dto';
+import * as nodemailer  from 'nodemailer'
 
 @Injectable()
 export class UserService {
@@ -43,5 +44,33 @@ export class UserService {
       return this.signUserId(user.user_id);
     }
     throw new CustomError(401, "Invalid e-mail or password");
+  }
+
+  async recoverPassword(newPassword: string, user_id: number) {
+    const hashedPassword = await this.hashPassword(newPassword);
+    try {
+      await this.userRepository.update({user_id}, {password: hashedPassword})
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async sendRecoveryEmail(email: string) {
+    const user = await this.userRepository.findOneBy({email})
+    const jwtToken = this.signUserId(user.user_id);
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+          user: "debouaservices@gmail.com",
+          pass: "eydjxrubhtruxrau"
+      }
+    })
+    transporter.sendMail({
+      from: "debouaservices@gmail.com",
+      to: email,
+      subject: "Recuperação de senha",
+      html: `<h1>Clique no link abaixo para recuperar sua senha</h1><br><a href='http://localhost:3000/recuperarSenha?token=${jwtToken}'>http://localhost:3000/recuperarSenha?token=${jwtToken}</a>`
+    })
   }
 }
