@@ -8,10 +8,12 @@ async function bootstrap() {
     .setTitle('deboua')
     .setDescription('deboua API description')
     .setVersion('1.0')
-    .addTag("users")
+    .addBearerAuth()
+    .addSecurityRequirements('bearer')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
-  await app.listen(3000);
+  app.enableCors()
+  await app.listen(3001);
 }
 bootstrap();
